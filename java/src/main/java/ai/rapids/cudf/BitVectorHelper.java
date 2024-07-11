@@ -21,7 +21,7 @@ package ai.rapids.cudf;
 /**
  * This class does bit manipulation using byte arithmetic
  */
-final class BitVectorHelper {
+public final class BitVectorHelper {
 
   /**
    * Shifts that to the left by the required bits then appends to this
@@ -74,7 +74,7 @@ final class BitVectorHelper {
    * getValidityLengthInBytes(7) => 1 byte
    * getValidityLengthInBytes(14) => 2 bytes
    */
-  static long getValidityLengthInBytes(long rows) {
+  public static long getValidityLengthInBytes(long rows) {
     return (rows + 7) / 8;
   }
 
