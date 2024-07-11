@@ -4838,7 +4838,7 @@ public class ColumnView implements AutoCloseable, BinaryOperable {
    * creating the device side vector from host side nested vectors. Eventually this can go away or
    * be refactored to hold less state like just the handles and the buffers to close.
    */
-  static class NestedColumnVector {
+  public static class NestedColumnVector {
 
     private final DeviceMemoryBuffer data;
     private final DeviceMemoryBuffer valid;
@@ -4848,7 +4848,7 @@ public class ColumnView implements AutoCloseable, BinaryOperable {
     private final Optional<Long> nullCount;
     List<NestedColumnVector> children;
 
-    private NestedColumnVector(DType type, long rows, Optional<Long> nullCount,
+    public NestedColumnVector(DType type, long rows, Optional<Long> nullCount,
         DeviceMemoryBuffer data, DeviceMemoryBuffer valid,
         DeviceMemoryBuffer offsets, List<NestedColumnVector> children) {
       this.dataType = type;
@@ -4986,6 +4986,50 @@ public class ColumnView implements AutoCloseable, BinaryOperable {
         buffers.add(offsets);
       }
       return buffers;
+    }
+
+    public List<DeviceMemoryBuffer> getSelfBuffers() {
+      List<DeviceMemoryBuffer> buffers = new ArrayList<>();
+      if (data != null) {
+        buffers.add(data);
+      }
+      if (valid != null) {
+        buffers.add(valid);
+      }
+      if (offsets != null) {
+        buffers.add(offsets);
+      }
+      return buffers;
+    }
+
+    public List<NestedColumnVector> getChildren() {
+        return Collections.unmodifiableList(children);
+    }
+
+    public NestedColumnVector withNewChildren(List<NestedColumnVector> children) {
+      return new NestedColumnVector(dataType, rows, nullCount, data, valid, offsets, children);
+    }
+
+    public ColumnVector toColumnVector() {
+        List<DeviceMemoryBuffer> toClose = new ArrayList<>();
+        long[] childHandles = new long[children.size()];
+        try {
+            for (ColumnView.NestedColumnVector ncv : children) {
+                toClose.addAll(ncv.getBuffersToClose());
+            }
+            for (int i = 0; i < children.size(); i++) {
+                childHandles[i] = children.get(i).createViewHandle();
+            }
+            return new ColumnVector(dataType, rows, nullCount, data,
+                    valid, offsets, toClose, childHandles);
+        } finally {
+            for (int i = 0; i < childHandles.length; i++) {
+                if (childHandles[i] != 0) {
+                    ColumnView.deleteColumnView(childHandles[i]);
+                    childHandles[i] = 0;
+                }
+            }
+        }
     }
 
     private static long getEndStringOffset(long totalRows, long index, HostMemoryBuffer offsets) {
@@ -5287,5 +5331,21 @@ public class ColumnView implements AutoCloseable, BinaryOperable {
   public ColumnVector toHex() {
     assert getType().isIntegral() : "Only integers are supported";
     return new ColumnVector(toHex(this.getNativeView()));
+  }
+
+  public void toSchema(String namePrefix, Schema.Builder builder) {
+    toSchemaInner(0,  namePrefix, builder);
+  }
+
+  private int toSchemaInner(int idx, String namePrefix, Schema.Builder builder) {
+    String name = namePrefix + idx;
+
+    Schema.Builder thisBuilder = builder.addColumn(this.getType(), name);
+    int lastIdx = idx;
+    for (int i=0; i < this.getNumChildren(); i++) {
+      lastIdx = this.getChildColumnView(i).toSchemaInner(lastIdx + 1, namePrefix, thisBuilder);
+    }
+
+    return lastIdx;
   }
 }

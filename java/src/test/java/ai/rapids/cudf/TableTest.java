@@ -40,7 +40,6 @@ import org.apache.parquet.hadoop.util.HadoopInputFile;
 import org.apache.parquet.schema.GroupType;
 import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.OriginalType;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -5606,7 +5605,7 @@ public class TableTest extends CudfTestBase {
                      .onColumn(8) //STRUCT Agg COLUMN
                      .overWindow(options));
              ColumnVector expectAggResult = ColumnVector.fromBoxedInts(5, 1, 9, null, 9, 8, 2, null, 0, 6, 6, null);
-             ColumnVector decExpectAggResult = decimalFromBoxedInts(true, -2, 5, 1, 9, null, 9, 8, 2, null, 0, 6, 6, null);
+             ColumnVector decExpectAggResult = TableTestUtils.decimalFromBoxedInts(true, -2, 5, 1, 9, null, 9, 8, 2, null, 0, 6, 6, null);
              ColumnVector listExpectAggResult = ColumnVector.fromLists(
                  new HostColumnVector.ListType(true, new HostColumnVector.BasicType(true, DType.INT32)),
                  Arrays.asList(14, null, 15, null), Arrays.asList((Integer) null), Arrays.asList(16), null,
@@ -5708,7 +5707,7 @@ public class TableTest extends CudfTestBase {
                      .onColumn(8) //STRUCT Agg COLUMN
                      .overWindow(options));
              ColumnVector expectAggResult = ColumnVector.fromBoxedInts(null, null, null, null, null, null, null, null, null, null, null, null);
-             ColumnVector decExpectAggResult = decimalFromBoxedInts(true, -2, null, null, null, null, null, null, null, null, null, null, null, null);
+             ColumnVector decExpectAggResult = TableTestUtils.decimalFromBoxedInts(true, -2, null, null, null, null, null, null, null, null, null, null, null, null);
              ColumnVector listExpectAggResult = ColumnVector.fromLists(
                  new HostColumnVector.ListType(true, new HostColumnVector.BasicType(true, DType.INT32)),
                  null, null, null, null, null, null, null, null, null, null, null, null);
@@ -5826,7 +5825,7 @@ public class TableTest extends CudfTestBase {
                      .onColumn(8) //STRUCT Agg COLUMN
                      .overWindow(options));
              ColumnVector expectAggResult = ColumnVector.fromBoxedInts(null, 7, 5, 1, null, 7, 9, 8, null, 8, 0, 6);
-             ColumnVector decExpectAggResult = decimalFromBoxedInts(true, -2, null, 7, 5, 1, null, 7, 9, 8, null, 8, 0, 6);
+             ColumnVector decExpectAggResult = TableTestUtils.decimalFromBoxedInts(true, -2, null, 7, 5, 1, null, 7, 9, 8, null, 8, 0, 6);
              ColumnVector listExpectAggResult = ColumnVector.fromLists(
                  new HostColumnVector.ListType(true, new HostColumnVector.BasicType(true, DType.INT32)),
                  null, Arrays.asList(11, 12, null, 13), Arrays.asList(14, null, 15, null), Arrays.asList((Integer) null),
@@ -5927,7 +5926,7 @@ public class TableTest extends CudfTestBase {
                      .onColumn(8) //STRUCT Agg COLUMN
                      .overWindow(options));
              ColumnVector expectAggResult = ColumnVector.fromBoxedInts(null, null, null, null, null, null, null, null, null, null, null, null);
-             ColumnVector decExpectAggResult = decimalFromBoxedInts(true, -2, null, null, null, null, null, null, null, null, null, null, null, null);
+             ColumnVector decExpectAggResult = TableTestUtils.decimalFromBoxedInts(true, -2, null, null, null, null, null, null, null, null, null, null, null, null);
              ColumnVector listExpectAggResult = ColumnVector.fromLists(
                  new HostColumnVector.ListType(true, new HostColumnVector.BasicType(true, DType.INT32)),
                  null, null, null, null, null, null, null, null, null, null, null, null);
@@ -6976,37 +6975,6 @@ public class TableTest extends CudfTestBase {
     }
   }
 
-  /**
-   * Helper for constructing BigInteger from int
-   * @param x Integer value
-   * @return BigInteger equivalent of x
-   */
-  private static BigInteger big(int x)
-  {
-    return new BigInteger("" + x);
-  }
-
-  /**
-   * Helper to get scalar for preceding == Decimal(value),
-   * with data width depending upon the order-by
-   * column index:
-   *   orderby_col_idx = 2 -> Decimal32
-   *   orderby_col_idx = 3 -> Decimal64
-   *   orderby_col_idx = 4 -> Decimal128
-   */
-  private static Scalar getDecimalScalarRangeBounds(int scale, int unscaledValue, int orderby_col_idx)
-  {
-    switch(orderby_col_idx)
-    {
-      case 2: return Scalar.fromDecimal(scale, unscaledValue);
-      case 3: return Scalar.fromDecimal(scale, Long.valueOf(unscaledValue));
-      case 4: return Scalar.fromDecimal(scale, big(unscaledValue));
-      default:
-        throw new IllegalStateException("Unexpected order by column index: "
-                                        + orderby_col_idx);
-    }
-  }
-
   @Test
   void testRangeWindowsWithDecimalOrderBy() {
     try (Table unsorted = new Table.TestBuilder()
@@ -7019,9 +6987,9 @@ public class TableTest extends CudfTestBase {
                              4000l, 3000l, 2000l, 1000l,
                              4000l, 3000l, 2000l, 1000l) // Decimal OBY Key
         .decimal128Column(-1, RoundingMode.UNNECESSARY,
-                              big(4000), big(3000), big(2000), big(1000),
-                              big(4000), big(3000), big(2000), big(1000),
-                              big(4000), big(3000), big(2000), big(1000))
+                              TableTestUtils.big(4000), TableTestUtils.big(3000), TableTestUtils.big(2000), TableTestUtils.big(1000),
+                              TableTestUtils.big(4000), TableTestUtils.big(3000), TableTestUtils.big(2000), TableTestUtils.big(1000),
+                              TableTestUtils.big(4000), TableTestUtils.big(3000), TableTestUtils.big(2000), TableTestUtils.big(1000))
         .column(9, 1, 5, 7, 2, 8, 9, 7, 6, 6, 0, 8) // Agg Column
         .build()) {
 
@@ -7038,8 +7006,8 @@ public class TableTest extends CudfTestBase {
           assertColumnsAreEqual(expectSortedAggColumn, sortedAggColumn);
 
           // Test Window functionality with range window (200 PRECEDING and 100 FOLLOWING)
-          try (Scalar preceding200 = getDecimalScalarRangeBounds(0, 200, decimal_oby_col_idx);
-               Scalar following100 = getDecimalScalarRangeBounds(2, 1, decimal_oby_col_idx);
+          try (Scalar preceding200 = TableTestUtils.getDecimalScalarRangeBounds(0, 200, decimal_oby_col_idx);
+               Scalar following100 = TableTestUtils.getDecimalScalarRangeBounds(2, 1, decimal_oby_col_idx);
                WindowOptions window = WindowOptions.builder()
                 .minPeriods(1)
                 .window(preceding200, following100)
@@ -7056,7 +7024,7 @@ public class TableTest extends CudfTestBase {
           }
 
           // Test Window functionality with range window (UNBOUNDED PRECEDING and CURRENT ROW)
-          try (Scalar current_row = getDecimalScalarRangeBounds(0, 0, decimal_oby_col_idx);
+          try (Scalar current_row = TableTestUtils.getDecimalScalarRangeBounds(0, 0, decimal_oby_col_idx);
                WindowOptions window = WindowOptions.builder()
                 .minPeriods(1)
                 .unboundedPreceding()
@@ -7094,24 +7062,6 @@ public class TableTest extends CudfTestBase {
     }
   }
 
-  /**
-   * Helper to get scalar for preceding == Decimal(value),
-   * with data width depending upon the order-by column index:
-   *   orderby_col_idx = 2 -> FLOAT32
-   *   orderby_col_idx = 3 -> FLOAT64
-   */
-  private static Scalar getFloatingPointScalarRangeBounds(float value, int orderby_col_idx)
-  {
-    switch(orderby_col_idx)
-    {
-      case 2: return Scalar.fromFloat(value);
-      case 3: return Scalar.fromDouble(Double.valueOf(value));
-      default:
-        throw new IllegalStateException("Unexpected order by column index: "
-                + orderby_col_idx);
-    }
-  }
-
   @Test
   void testRangeWindowsWithFloatOrderBy() {
     try (Table unsorted = new Table.TestBuilder()
@@ -7138,8 +7088,8 @@ public class TableTest extends CudfTestBase {
           assertColumnsAreEqual(expectSortedAggColumn, sortedAggColumn);
 
           // Test Window functionality with range window (200 PRECEDING and 100 FOLLOWING)
-          try (Scalar preceding200 = getFloatingPointScalarRangeBounds(200, float_oby_col_idx);
-               Scalar following100 = getFloatingPointScalarRangeBounds(100, float_oby_col_idx);
+          try (Scalar preceding200 = TableTestUtils.getFloatingPointScalarRangeBounds(200, float_oby_col_idx);
+               Scalar following100 = TableTestUtils.getFloatingPointScalarRangeBounds(100, float_oby_col_idx);
                WindowOptions window = WindowOptions.builder()
                        .minPeriods(1)
                        .window(preceding200, following100)
@@ -7156,7 +7106,7 @@ public class TableTest extends CudfTestBase {
           }
 
           // Test Window functionality with range window (UNBOUNDED PRECEDING and CURRENT ROW)
-          try (Scalar current_row = getFloatingPointScalarRangeBounds(0, float_oby_col_idx);
+          try (Scalar current_row = TableTestUtils.getFloatingPointScalarRangeBounds(0, float_oby_col_idx);
                WindowOptions window = WindowOptions.builder()
                        .minPeriods(1)
                        .unboundedPreceding()
@@ -7635,38 +7585,38 @@ public class TableTest extends CudfTestBase {
     try (Table partialResults1 = new Table.TestBuilder()
              .column(1, 2, 3, 4)
              .column(nestedType,
-                 struct(1, 0.0, 0.0),
-                 struct(1, 1.0, 0.0),
-                 struct(0, null, null),
-                 struct(0, null, null))
+                 TableTestUtils.struct(1, 0.0, 0.0),
+                 TableTestUtils.struct(1, 1.0, 0.0),
+                 TableTestUtils.struct(0, null, null),
+                 TableTestUtils.struct(0, null, null))
              .build();
          Table partialResults2 = new Table.TestBuilder()
              .column(1, 2, 3)
              .column(nestedType,
-                 struct(1, 3.0, 0.0),
-                 struct(1, 4.0, 0.0),
-                 struct(1, 2.0, 0.0))
+                 TableTestUtils.struct(1, 3.0, 0.0),
+                 TableTestUtils.struct(1, 4.0, 0.0),
+                 TableTestUtils.struct(1, 2.0, 0.0))
              .build();
          Table partialResults3 = new Table.TestBuilder()
              .column(1, 2)
              .column(nestedType,
-                 struct(1, 6.0, 0.0),
-                 struct(1, Double.NaN, Double.NaN))
+                 TableTestUtils.struct(1, 6.0, 0.0),
+                 TableTestUtils.struct(1, Double.NaN, Double.NaN))
              .build();
          Table partialResults4 = new Table.TestBuilder()
              .column(2, 3, 4)
              .column(nestedType,
-                 struct(1, 9.0, 0.0),
-                 struct(1, 8.0, 0.0),
-                 struct(2, Double.NaN, Double.NaN))
+                 TableTestUtils.struct(1, 9.0, 0.0),
+                 TableTestUtils.struct(1, 8.0, 0.0),
+                 TableTestUtils.struct(2, Double.NaN, Double.NaN))
              .build();
          Table expected = new Table.TestBuilder()
              .column(1, 2, 3, 4)
              .column(nestedType,
-                 struct(3, 3.0, 18.0),
-                 struct(4, Double.NaN, Double.NaN),
-                 struct(2, 5.0, 18.0),
-                 struct(2, Double.NaN, Double.NaN))
+                 TableTestUtils.struct(3, 3.0, 18.0),
+                 TableTestUtils.struct(4, Double.NaN, Double.NaN),
+                 TableTestUtils.struct(2, 5.0, 18.0),
+                 TableTestUtils.struct(2, Double.NaN, Double.NaN))
              .build()) {
       try (Table concatenatedResults = Table.concatenate(
              partialResults1,
@@ -8632,19 +8582,19 @@ public class TableTest extends CudfTestBase {
       StructType structType = new StructType(true,
           new BasicType(true, DType.INT32), new BasicType(true, DType.STRING), dec64Type);
       addColumnFn.put(Columns.STRUCT, (t) -> t.column(structType,
-          struct(1, "k1", BigDecimal.ONE),
-          struct(2, "k2", BigDecimal.ZERO),
-          struct(3, "k3", BigDecimal.TEN),
-          struct(4, "k4", BigDecimal.valueOf(Long.MAX_VALUE)),
+          TableTestUtils.struct(1, "k1", BigDecimal.ONE),
+          TableTestUtils.struct(2, "k2", BigDecimal.ZERO),
+          TableTestUtils.struct(3, "k3", BigDecimal.TEN),
+          TableTestUtils.struct(4, "k4", BigDecimal.valueOf(Long.MAX_VALUE)),
           new HostColumnVector.StructData((List) null)));
       BasicType dec128Type = new BasicType(true, DType.create(DType.DTypeEnum.DECIMAL128, -5));
       addColumnFn.put(Columns.STRUCT_DEC128, (t) ->
           t.column(new StructType(false, dec128Type),
-              struct(BigDecimal.valueOf(Integer.MAX_VALUE, 5)),
-              struct(BigDecimal.valueOf(Long.MAX_VALUE, 5)),
-              struct(new BigDecimal("111111111122222222223333333333").setScale(5)),
-              struct(new BigDecimal("123456789123456789123456789").setScale(5)),
-              struct((BigDecimal) null)));
+              TableTestUtils.struct(BigDecimal.valueOf(Integer.MAX_VALUE, 5)),
+              TableTestUtils.struct(BigDecimal.valueOf(Long.MAX_VALUE, 5)),
+              TableTestUtils.struct(new BigDecimal("111111111122222222223333333333").setScale(5)),
+              TableTestUtils.struct(new BigDecimal("123456789123456789123456789").setScale(5)),
+              TableTestUtils.struct((BigDecimal) null)));
 
       addColumnFn.put(Columns.LIST, (t) ->
           t.column(new ListType(false, new BasicType(false, DType.INT32)),
@@ -8655,21 +8605,21 @@ public class TableTest extends CudfTestBase {
               Arrays.asList(8, 9, 10)));
       addColumnFn.put(Columns.LIST_STRUCT, (t) ->
           t.column(new ListType(true, structType),
-              Arrays.asList(struct(1, "k1", BigDecimal.ONE), struct(2, "k2", BigDecimal.ONE),
-                  struct(3, "k3", BigDecimal.ONE)),
-              Arrays.asList(struct(4, "k4", BigDecimal.ONE), struct(5, "k5", BigDecimal.ONE)),
-              Arrays.asList(struct(6, "k6", BigDecimal.ONE)),
+              Arrays.asList(TableTestUtils.struct(1, "k1", BigDecimal.ONE), TableTestUtils.struct(2, "k2", BigDecimal.ONE),
+                  TableTestUtils.struct(3, "k3", BigDecimal.ONE)),
+              Arrays.asList(TableTestUtils.struct(4, "k4", BigDecimal.ONE), TableTestUtils.struct(5, "k5", BigDecimal.ONE)),
+              Arrays.asList(TableTestUtils.struct(6, "k6", BigDecimal.ONE)),
               Arrays.asList(new HostColumnVector.StructData((List) null)),
               (List) null));
       addColumnFn.put(Columns.LIST_DEC128, (t) ->
           t.column(new ListType(true, new StructType(false, dec128Type)),
-              Arrays.asList(struct(BigDecimal.valueOf(Integer.MAX_VALUE, 5)),
-                  struct(BigDecimal.valueOf(Integer.MIN_VALUE, 5))),
-              Arrays.asList(struct(BigDecimal.valueOf(Long.MAX_VALUE, 5)),
-                  struct(BigDecimal.valueOf(0, 5)), struct(BigDecimal.valueOf(-1, 5))),
-              Arrays.asList(struct(new BigDecimal("111111111122222222223333333333").setScale(5))),
-              Arrays.asList(struct(new BigDecimal("123456789123456789123456789").setScale(5))),
-              Arrays.asList(struct((BigDecimal) null))));
+              Arrays.asList(TableTestUtils.struct(BigDecimal.valueOf(Integer.MAX_VALUE, 5)),
+                  TableTestUtils.struct(BigDecimal.valueOf(Integer.MIN_VALUE, 5))),
+              Arrays.asList(TableTestUtils.struct(BigDecimal.valueOf(Long.MAX_VALUE, 5)),
+                  TableTestUtils.struct(BigDecimal.valueOf(0, 5)), TableTestUtils.struct(BigDecimal.valueOf(-1, 5))),
+              Arrays.asList(TableTestUtils.struct(new BigDecimal("111111111122222222223333333333").setScale(5))),
+              Arrays.asList(TableTestUtils.struct(new BigDecimal("123456789123456789123456789").setScale(5))),
+              Arrays.asList(TableTestUtils.struct((BigDecimal) null))));
     }
 
     static TestBuilder addColumn(TestBuilder tb, String colName) {
@@ -9523,34 +9473,7 @@ public class TableTest extends CudfTestBase {
     }
   }
 
-  // utility methods to reduce typing
-
-  private static StructData struct(Object... values) {
-    return new StructData(values);
-  }
-
-  private StructData[] structs(StructData... values) {
-    return values;
-  }
-
-  private String[] strings(String... values) {
-    return values;
-  }
-
-  private static ColumnVector decimalFromBoxedInts(boolean isDec64, int scale, Integer... values) {
-    BigDecimal[] decimals = new BigDecimal[values.length];
-    for (int i = 0; i < values.length; i++) {
-      if (values[i] == null) {
-        decimals[i] = null;
-      } else {
-        decimals[i] = BigDecimal.valueOf(values[i], -scale);
-      }
-    }
-    DType type = isDec64 ? DType.create(DType.DTypeEnum.DECIMAL64, scale) : DType.create(DType.DTypeEnum.DECIMAL32, scale);
-    return ColumnVector.build(type, decimals.length, (b) -> b.appendBoxed(decimals));
-  }
-
-  private Table buildTestTable() {
+  private static Table buildTestTable() {
     StructType mapStructType = new StructType(true,
         new BasicType(false, DType.STRING),
         new BasicType(false, DType.STRING));
@@ -9573,30 +9496,30 @@ public class TableTest extends CudfTestBase {
         .decimal64Column(-8,      1L,     null,     1001L,      50L,   -2000L,     null, 1L, 2L, 3L, 4L, null, 6L, 7L, 8L, 9L, null, 11L, 12L, 13L, 14L, null)
         .column(     "A",      "B",      "C",      "D",     null,   "TESTING", "1", "2", "3", "4", "5", "6", "7", null, "9", "10", "11", "12", "13", null, "15")
         .column(
-            strings("1", "2", "3"), strings("4"), strings("5"), strings("6, 7"),
-            strings("", "9", null), strings("11"), strings(""), strings(null, null),
-            strings("15", null), null, null, strings("18", "19", "20"),
-            null, strings("22"), strings("23", ""), null,
-            null, null, null, strings(),
-            strings("the end"))
+            TableTestUtils.strings("1", "2", "3"), TableTestUtils.strings("4"), TableTestUtils.strings("5"), TableTestUtils.strings("6, 7"),
+            TableTestUtils.strings("", "9", null), TableTestUtils.strings("11"), TableTestUtils.strings(""), TableTestUtils.strings(null, null),
+            TableTestUtils.strings("15", null), null, null, TableTestUtils.strings("18", "19", "20"),
+            null, TableTestUtils.strings("22"), TableTestUtils.strings("23", ""), null,
+            null, null, null, TableTestUtils.strings(),
+            TableTestUtils.strings("the end"))
         .column(mapStructType,
-            structs(struct("1", "2")), structs(struct("3", "4")),
+            TableTestUtils.structs(TableTestUtils.struct("1", "2")), TableTestUtils.structs(TableTestUtils.struct("3", "4")),
             null, null,
-            structs(struct("key", "value"), struct("a", "b")), null,
-            null, structs(struct("3", "4"), struct("1", "2")),
-            structs(), structs(null, struct("foo", "bar")),
-            structs(null, null, null), null,
-            null, null,
-            null, null,
+            TableTestUtils.structs(TableTestUtils.struct("key", "value"), TableTestUtils.struct("a", "b")), null,
+            null, TableTestUtils.structs(TableTestUtils.struct("3", "4"), TableTestUtils.struct("1", "2")),
+            TableTestUtils.structs(), TableTestUtils.structs(null, TableTestUtils.struct("foo", "bar")),
+            TableTestUtils.structs(null, null, null), null,
             null, null,
             null, null,
-            structs(struct("the", "end")))
+            null, null,
+            null, null,
+            TableTestUtils.structs(TableTestUtils.struct("the", "end")))
         .column(structType,
-            struct(1, 1f), null, struct(2, 3f), null, struct(8, 7f),
-            struct(0, 0f), null, null, struct(-1, -1f), struct(-100, -100f),
-            struct(Integer.MAX_VALUE, Float.MAX_VALUE), null, null, null, null,
+            TableTestUtils.struct(1, 1f), null, TableTestUtils.struct(2, 3f), null, TableTestUtils.struct(8, 7f),
+            TableTestUtils.struct(0, 0f), null, null, TableTestUtils.struct(-1, -1f), TableTestUtils.struct(-100, -100f),
+            TableTestUtils.struct(Integer.MAX_VALUE, Float.MAX_VALUE), null, null, null, null,
             null, null, null, null, null,
-            struct(Integer.MIN_VALUE, Float.MIN_VALUE))
+            TableTestUtils.struct(Integer.MIN_VALUE, Float.MIN_VALUE))
         .column(     "A",      "A",      "C",      "C",     null,   "TESTING", "1", "2", "3", "4", "5", "6", "7", null, "9", "10", "11", "12", "13", null, "15")
         .build();
   }
@@ -9664,9 +9587,9 @@ public class TableTest extends CudfTestBase {
         new BasicType(false, DType.INT32), new BasicType(false, DType.STRING));
     try (Table input = new Table.TestBuilder()
         .column(new ListType(false, nestedType),
-            Arrays.asList(struct(1, "k1"), struct(2, "k2"), struct(3, "k3")),
-            Arrays.asList(struct(4, "k4"), struct(5, "k5")),
-            Arrays.asList(struct(6, "k6")),
+            Arrays.asList(TableTestUtils.struct(1, "k1"), TableTestUtils.struct(2, "k2"), TableTestUtils.struct(3, "k3")),
+            Arrays.asList(TableTestUtils.struct(4, "k4"), TableTestUtils.struct(5, "k5")),
+            Arrays.asList(TableTestUtils.struct(6, "k6")),
             Arrays.asList(new HostColumnVector.StructData((List) null)),
             null)
         .column("s1", "s2", "s3", "s4", "s5")
@@ -9684,16 +9607,16 @@ public class TableTest extends CudfTestBase {
       List<Object[]> expectedData = new ArrayList<Object[]>(){{
         if (!outer) {
           this.add(new HostColumnVector.StructData[]{
-              struct(1, "k1"), struct(2, "k2"), struct(3, "k3"),
-              struct(4, "k4"), struct(5, "k5"), struct(6, "k6"),
+              TableTestUtils.struct(1, "k1"), TableTestUtils.struct(2, "k2"), TableTestUtils.struct(3, "k3"),
+              TableTestUtils.struct(4, "k4"), TableTestUtils.struct(5, "k5"), TableTestUtils.struct(6, "k6"),
               new HostColumnVector.StructData((List) null)});
           this.add(new String[]{"s1", "s1", "s1", "s2", "s2", "s3", "s4"});
           this.add(new Integer[]{1, 1, 1, 3, 3, 5, 7});
           this.add(new Double[]{12.0, 12.0, 12.0, 14.0, 14.0, 13.0, 11.0});
         } else {
           this.add(new HostColumnVector.StructData[]{
-              struct(1, "k1"), struct(2, "k2"), struct(3, "k3"),
-              struct(4, "k4"), struct(5, "k5"), struct(6, "k6"),
+              TableTestUtils.struct(1, "k1"), TableTestUtils.struct(2, "k2"), TableTestUtils.struct(3, "k3"),
+              TableTestUtils.struct(4, "k4"), TableTestUtils.struct(5, "k5"), TableTestUtils.struct(6, "k6"),
               new HostColumnVector.StructData((List) null), null});
           this.add(new String[]{"s1", "s1", "s1", "s2", "s2", "s3", "s4", "s5"});
           this.add(new Integer[]{1, 1, 1, 3, 3, 5, 7, 9});
