@@ -805,6 +805,12 @@ public final class ColumnVector extends ColumnView {
     return super.castTo(type);
   }
 
+  public static DeviceMemoryBuffer copyBitmask(long startAddress, long beginBit, long endBit) {
+    long[] ret = copyBitmaskNative(startAddress, beginBit, endBit);
+    return DeviceMemoryBuffer.fromRmm(ret[0], ret[1], ret[2]);
+  }
+
+
   /////////////////////////////////////////////////////////////////////////////
   // NATIVE METHODS
   /////////////////////////////////////////////////////////////////////////////
@@ -916,6 +922,8 @@ public final class ColumnVector extends ColumnView {
   static native long getNativeColumnView(long cudfColumnHandle) throws CudfException;
 
   static native long makeEmptyCudfColumn(int type, int scale);
+
+  private static native long[] copyBitmaskNative(long startAddresses, long beginBit, long endBit);
 
   /////////////////////////////////////////////////////////////////////////////
   // HELPER CLASSES

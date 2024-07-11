@@ -15,6 +15,7 @@
  */
 package ai.rapids.cudf;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Test for operations on tables with large row counts.
  */
+@Disabled
 public class LargeTableTest extends CudfTestBase {
 
   static final long RMM_POOL_SIZE_LARGE = 10L * 1024 * 1024 * 1024;

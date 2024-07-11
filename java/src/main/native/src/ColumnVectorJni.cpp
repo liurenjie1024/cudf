@@ -18,6 +18,8 @@
 #include "dtype_utils.hpp"
 #include "jni_utils.hpp"
 
+#include <memory>
+
 #include <cudf/column/column_factories.hpp>
 #include <cudf/concatenate.hpp>
 #include <cudf/copying.hpp>
@@ -29,6 +31,7 @@
 #include <cudf/lists/detail/concatenate.hpp>
 #include <cudf/lists/filling.hpp>
 #include <cudf/lists/lists_column_view.hpp>
+#include <cudf/null_mask.hpp>
 #include <cudf/reshape.hpp>
 #include <cudf/scalar/scalar_factories.hpp>
 #include <cudf/strings/combine.hpp>
@@ -419,4 +422,30 @@ JNIEXPORT jint JNICALL Java_ai_rapids_cudf_ColumnVector_getNativeNullCountColumn
   }
   CATCH_STD(env, 0);
 }
+
+JNIEXPORT jlongArray JNICALL Java_ai_rapids_cudf_ColumnVector_copyBitmaskNative(JNIEnv* env,
+                                                                           jclass,
+                                                                           jlong start_address,
+                                                                           jlong start_bit,
+                                                                           jlong end_bit)
+{
+    try {
+        cudf::jni::auto_set_device(env);
+        cudf::bitmask_type const* address = reinterpret_cast<cudf::bitmask_type const*>(start_address);
+        cudf::size_type first_bit = static_cast<cudf::size_type>(start_bit);
+        cudf::size_type last_bit  = static_cast<cudf::size_type>(end_bit);
+        std::unique_ptr<rmm::device_buffer> ret_buf = std::make_unique<rmm::device_buffer>(cudf::copy_bitmask(
+                address, first_bit, last_bit));
+
+        cudf::jni::native_jlongArray result(env, 3);
+        result[0] = ptr_as_jlong(ret_buf->data());
+        result[1] = static_cast<jlong>(ret_buf->size());
+        result[2] =
+release_as_jlong(ret_buf);
+
+        return result.get_jArray();
+    }
+    CATCH_STD(env, 0);
+}
+
 }  // extern "C"

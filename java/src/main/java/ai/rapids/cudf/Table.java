@@ -4979,4 +4979,15 @@ public final class Table implements AutoCloseable {
       }
     }
   }
+
+  public Schema toSchema() {
+    Schema.Builder builder = Schema.builder();
+
+    for (int i=0; i<getNumberOfColumns(); i++) {
+      ColumnVector cv = getColumn(i);
+      cv.toSchema("col_" + i + "_", builder);
+    }
+
+    return builder.build();
+  }
 }

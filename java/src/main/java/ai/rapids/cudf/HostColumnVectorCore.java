@@ -125,7 +125,7 @@ public class HostColumnVectorCore implements AutoCloseable {
    * @param rowIndex the row number
    * @return an object that would need to be casted to appropriate type based on this vector's data type
    */
-  Object getElement(int rowIndex) {
+  public Object getElement(int rowIndex) {
     if (type.equals(DType.LIST)) {
       return getList(rowIndex);
     } else if (type.equals(DType.STRUCT)) {
@@ -659,5 +659,21 @@ public class HostColumnVectorCore implements AutoCloseable {
     public String toString() {
       return "(ID: " + id + ")";
     }
+  }
+
+  public void toSchema(String namePrefix, Schema.Builder builder) {
+    toSchemaInner(0,  namePrefix, builder);
+  }
+
+  private int toSchemaInner(int idx, String namePrefix, Schema.Builder builder) {
+    String name = namePrefix + idx;
+
+    Schema.Builder thisBuilder = builder.addColumn(this.getType(), name);
+    int lastIdx = idx;
+    for (int i=0; i < this.getNumChildren(); i++) {
+      lastIdx = this.getChildColumnView(i).toSchemaInner(lastIdx + 1, namePrefix, thisBuilder);
+    }
+
+    return lastIdx;
   }
 }

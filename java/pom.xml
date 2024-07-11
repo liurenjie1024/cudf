@@ -150,6 +150,12 @@
             <version>3.2.4</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.26.3</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <properties>
@@ -464,15 +470,15 @@
                                       executable="cmake">
                                     <arg value="${basedir}/src/main/native"/>
                                     <arg line="${cmake.ccache.opts}"/>
-                                    <arg value="-DCUDA_STATIC_RUNTIME=${CUDA_STATIC_RUNTIME}" />
-                                    <arg value="-DCUDF_USE_PER_THREAD_DEFAULT_STREAM=${CUDF_USE_PER_THREAD_DEFAULT_STREAM}" />
-                                    <arg value="-DUSE_GDS=${USE_GDS}" />
+                                    <arg value="-DCUDA_STATIC_RUNTIME=${CUDA_STATIC_RUNTIME}"/>
+                                    <arg value="-DCUDF_USE_PER_THREAD_DEFAULT_STREAM=${CUDF_USE_PER_THREAD_DEFAULT_STREAM}"/>
+                                    <arg value="-DUSE_GDS=${USE_GDS}"/>
                                     <arg value="-DCMAKE_CXX_FLAGS=${cxx.flags}"/>
                                     <arg value="-DCMAKE_EXPORT_COMPILE_COMMANDS=${CMAKE_EXPORT_COMPILE_COMMANDS}"/>
                                     <arg value="-DCUDF_CPP_BUILD_DIR=${CUDF_CPP_BUILD_DIR}"/>
                                     <arg value="-DGPU_ARCHS=${GPU_ARCHS}"/>
                                     <arg value="-DCUDF_JNI_LIBCUDF_STATIC=${CUDF_JNI_LIBCUDF_STATIC}"/>
-                                    <arg value="-DCUDF_JNI_ENABLE_PROFILING=${CUDF_JNI_ENABLE_PROFILING}"/>
+                                    <arg value="-DCUDF_JNI_ENABLE_PROFILING=OFF"/>
                                     <arg value="-DBUILD_SHARED_LIBS=ON"/>
                                 </exec>
                                 <exec dir="${native.build.path}"
