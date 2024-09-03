@@ -84,7 +84,7 @@ public class KudoSerializer implements TableSerializer {
     }
 
     @Override
-    public Table mergeTable(List<Object> buffers, Schema schema) {
+    public List<HostColumnVector> mergeToHost(List<Object> buffers, Schema schema) {
         List<SerializedTable> serializedTables = buffers
                 .stream()
                 .map(o -> (SerializedTable) o)

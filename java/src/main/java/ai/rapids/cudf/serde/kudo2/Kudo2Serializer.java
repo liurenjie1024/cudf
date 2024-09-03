@@ -133,6 +133,11 @@ public class Kudo2Serializer implements TableSerializer {
         }
     }
 
+    @Override
+    public List<HostColumnVector> mergeToHost(List<Object> buffers, Schema schema) {
+        throw new UnsupportedOperationException("mergeToHost");
+    }
+
     private long writeSliced(HostColumnVector[] columns, DataWriter output, long rowOffset, long numRows) throws Exception {
         List<HostColumnVector> columnList = Arrays
                 .stream(columns)

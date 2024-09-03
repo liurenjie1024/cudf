@@ -14,7 +14,7 @@ import static ai.rapids.cudf.serde.kudo.KudoSerializer.padFor64byteAlignment;
 import static ai.rapids.cudf.utils.PreConditions.ensure;
 import static java.lang.Math.min;
 
-public class MultiTableDeserializer implements SchemaVisitor<HostColumnVector, Table>, AutoCloseable {
+public class MultiTableDeserializer implements SchemaVisitor<HostColumnVector, List<HostColumnVector>>, AutoCloseable {
     // Number of 1s in a byte
     private static final int[] NUMBER_OF_ONES = new int[256];
 
@@ -56,16 +56,8 @@ public class MultiTableDeserializer implements SchemaVisitor<HostColumnVector, T
 
 
     @Override
-    public Table visitTopSchema(Schema schema, List<HostColumnVector> children) {
-        ColumnVector[] cols = new ColumnVector[children.size()];
-        try (CloseableArray<ColumnVector> array = CloseableArray.wrap(cols)) {
-            for (int i = 0; i < children.size(); i += 1) {
-                array.set(i, children.get(i).copyToDevice());
-            }
-            return new Table(array.getArray());
-        } finally {
-            Arms.closeQuietly(children);
-        }
+    public List<HostColumnVector> visitTopSchema(Schema schema, List<HostColumnVector> children) {
+        return children;
     }
 
     @Override
