@@ -218,7 +218,7 @@ public final class ColumnVector extends ColumnView {
         od, vd, nullCount, numRows, childHandles);
   }
 
-  static ColumnVector fromViewWithContiguousAllocation(long columnViewAddress, DeviceMemoryBuffer buffer) {
+  public static ColumnVector fromViewWithContiguousAllocation(long columnViewAddress, DeviceMemoryBuffer buffer) {
     return new ColumnVector(columnViewAddress, buffer);
   }
 

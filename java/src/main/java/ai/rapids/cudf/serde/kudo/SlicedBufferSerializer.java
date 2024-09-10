@@ -8,6 +8,8 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 
+import static ai.rapids.cudf.serde.kudo.KudoSerializer.padFor64byteAlignment;
+
 class SlicedBufferSerializer implements SchemaWithColumnsVisitor<Long, Long> {
     private final SliceInfo root;
     private final BufferType bufferType;
@@ -111,9 +113,10 @@ class SlicedBufferSerializer implements SchemaWithColumnsVisitor<Long, Long> {
     private long copySlicedValidity(HostColumnVectorCore column, SliceInfo sliceInfo) throws IOException {
         if (column.getValidity() != null) {
             HostMemoryBuffer buff = column.getValidity();
+            long len = sliceInfo.getValidityBufferInfo().getBufferLength();
             writer.copyDataFrom(buff, sliceInfo.getValidityBufferInfo().getBufferOffset(),
-                    sliceInfo.getValidityBufferInfo().getBufferLength());
-            return sliceInfo.getValidityBufferInfo().getBufferLength();
+                    len);
+            return padFor64byteAlignment(writer, len);
         } else {
             return 0;
         }
@@ -128,7 +131,7 @@ class SlicedBufferSerializer implements SchemaWithColumnsVisitor<Long, Long> {
         long srcOffset = sliceInfo.offset * Integer.BYTES;
         HostMemoryBuffer buff = column.getOffsets();
         writer.copyDataFrom(buff, srcOffset, bytesToCopy);
-        return bytesToCopy;
+        return padFor64byteAlignment(writer, bytesToCopy);
     }
 
     private long copySlicedData(HostColumnVectorCore column, SliceInfo sliceInfo) throws IOException {
@@ -143,15 +146,17 @@ class SlicedBufferSerializer implements SchemaWithColumnsVisitor<Long, Long> {
                         throw new IllegalStateException("String column has no data buffer, " +
                                 "but bytes to copy is not zero: " + bytesToCopy);
                     }
+
+                    return 0;
                 } else {
                     writer.copyDataFrom(column.getData(), startByteOffset, bytesToCopy);
+                    return padFor64byteAlignment(writer, bytesToCopy);
                 }
-                return bytesToCopy;
             } else if (type.getSizeInBytes() > 0) {
                 long bytesToCopy = sliceInfo.rowCount * type.getSizeInBytes();
                 long srcOffset = sliceInfo.offset * type.getSizeInBytes();
                 writer.copyDataFrom(column.getData(), srcOffset, bytesToCopy);
-                return bytesToCopy;
+                return padFor64byteAlignment(writer, bytesToCopy);
             } else {
                 return 0;
             }

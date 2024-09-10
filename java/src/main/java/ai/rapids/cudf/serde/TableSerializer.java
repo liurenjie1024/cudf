@@ -61,7 +61,7 @@ public interface TableSerializer {
      * @param schema  The schema of the table.
      * @return The merged table.
      */
-    Table mergeTable(List<Object> buffers, Schema schema);
+    ContiguousTable mergeTable(List<Object> buffers, Schema schema);
 
     /**
      * Merge multiple serialized table buffers returned in {@link #readOneTableBuffer}  into a single table on host.
@@ -70,5 +70,5 @@ public interface TableSerializer {
      * @param schema  The schema of the table.
      * @return The merged table.
      */
-    List<HostColumnVector> mergeToHost(List<Object> buffers, Schema schema);
+    Object mergeToHost(List<Object> buffers, Schema schema);
 }

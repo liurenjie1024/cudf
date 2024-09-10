@@ -20,8 +20,8 @@ public final class SerializedTableHeader {
     private static final short VERSION_NUMBER = 0x0001;
 
     // Useful for reducing calculations in writing.
-    private int offset;
-    private int numRows;
+    private long offset;
+    private long numRows;
     private long validityBufferLen;
     private long offsetBufferLen;
     private long totalDataLen;
@@ -36,7 +36,7 @@ public final class SerializedTableHeader {
         readFrom(din);
     }
 
-    SerializedTableHeader(int offset, int numRows, long validityBufferLen, long offsetBufferLen, long totalDataLen, byte[] hasValidityBuffer) {
+    SerializedTableHeader(long offset, long numRows, long validityBufferLen, long offsetBufferLen, long totalDataLen, byte[] hasValidityBuffer) {
         this.offset = offset;
         this.numRows = numRows;
         this.validityBufferLen = validityBufferLen;
@@ -57,11 +57,11 @@ public final class SerializedTableHeader {
     /**
      * Returns the number of rows stored in this table.
      */
-    public int getNumRows() {
+    public long getNumRows() {
         return numRows;
     }
 
-    public int getOffset() {
+    public long getOffset() {
         return offset;
     }
 
@@ -78,7 +78,7 @@ public final class SerializedTableHeader {
     }
 
     public long getSerializedSize() {
-        return 4 + 2 + 4 + 4 + 8 + 8 + 8 + 4 + hasValidityBuffer.length;
+        return 4 + 2 + 8 + 8 + 8 + 8 + 8 + 4 + hasValidityBuffer.length;
     }
 
     public int getNumColumns() {
@@ -113,8 +113,8 @@ public final class SerializedTableHeader {
             throw new IllegalStateException("READING THE WRONG SERIALIZATION FORMAT VERSION FOUND " + version + " EXPECTED " + VERSION_NUMBER);
         }
 
-        offset = din.readInt();
-        numRows = din.readInt();
+        offset = din.readLong();
+        numRows = din.readLong();
 
         validityBufferLen = din.readLong();
         offsetBufferLen = din.readLong();
@@ -131,8 +131,8 @@ public final class SerializedTableHeader {
         dout.writeInt(SER_FORMAT_MAGIC_NUMBER);
         dout.writeShort(VERSION_NUMBER);
 
-        dout.writeInt(offset);
-        dout.writeInt(numRows);
+        dout.writeLong(offset);
+        dout.writeLong(numRows);
         dout.writeLong(validityBufferLen);
         dout.writeLong(offsetBufferLen);
         dout.writeLong(totalDataLen);

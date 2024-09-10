@@ -4794,7 +4794,7 @@ public class ColumnView implements AutoCloseable, BinaryOperable {
   private static native long getNativeValidityAddress(long viewHandle) throws CudfException;
   private static native long getNativeValidityLength(long viewHandle) throws CudfException;
 
-  static native long makeCudfColumnView(int type, int scale, long data, long dataSize, long offsets,
+  public static native long makeCudfColumnView(int type, int scale, long data, long dataSize, long offsets,
                                                 long valid, int nullCount, int size, long[] childHandle);
 
 
