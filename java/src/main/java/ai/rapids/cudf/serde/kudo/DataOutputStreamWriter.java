@@ -1,6 +1,7 @@
 package ai.rapids.cudf.serde.kudo;
 
 import ai.rapids.cudf.HostMemoryBuffer;
+import ai.rapids.cudf.JCudfSerialization;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -8,16 +9,17 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 
+import static ai.rapids.cudf.serde.kudo.KudoSerializer.safeLongToInt;
+
 /**
  * Visible for testing
  */
-final class DataOutputStreamWriter extends DataWriter {
+class DataOutputStreamWriter extends DataWriter {
+    private final byte[] arrayBuffer = new byte[1024 * 128];
     private final DataOutputStream dout;
-    private final WritableByteChannel channel;
 
     public DataOutputStreamWriter(DataOutputStream dout) {
         this.dout = dout;
-        this.channel = Channels.newChannel(dout);
     }
 
     @Override
@@ -49,8 +51,14 @@ final class DataOutputStreamWriter extends DataWriter {
 
     @Override
     public void copyDataFrom(HostMemoryBuffer src, long srcOffset, long len) throws IOException {
-        ByteBuffer buffer = src.asByteBuffer(srcOffset, (int) len);
-        channel.write(buffer);
+        long dataLeft = len;
+        while (dataLeft > 0) {
+            int amountToCopy = (int)Math.min(arrayBuffer.length, dataLeft);
+            src.getBytes(arrayBuffer, 0, srcOffset, amountToCopy);
+            dout.write(arrayBuffer, 0, amountToCopy);
+            srcOffset += amountToCopy;
+            dataLeft -= amountToCopy;
+        }
     }
 
     @Override

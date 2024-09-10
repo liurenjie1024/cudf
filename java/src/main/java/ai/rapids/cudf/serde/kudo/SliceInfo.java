@@ -1,6 +1,6 @@
 package ai.rapids.cudf.serde.kudo;
 
-class SliceInfo {
+public class SliceInfo {
     final long offset;
     final long rowCount;
     private final SlicedValidityBufferInfo validityBufferInfo;

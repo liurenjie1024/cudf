@@ -3,13 +3,13 @@ package ai.rapids.cudf.serde.kudo;
 import ai.rapids.cudf.*;
 import ai.rapids.cudf.schema.Visitors;
 import ai.rapids.cudf.serde.TableSerializer;
+import ai.rapids.cudf.utils.Arms;
 
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class KudoSerializer implements TableSerializer {
-
 
     private static final byte[] PADDING = new byte[64];
 
@@ -19,7 +19,7 @@ public class KudoSerializer implements TableSerializer {
 
     @Override
     public String version() {
-        return "MultiTableSerializer-v2";
+        return "MultiTableSerializer-v7";
     }
 
     @Override
@@ -46,7 +46,7 @@ public class KudoSerializer implements TableSerializer {
         }
         try {
             DataWriter writer = writerFrom(out);
-            SerializedTableHeader header = new SerializedTableHeader(0, (int) numRows, 0, 0, 0, new byte[0]);
+            SerializedTableHeader header = new SerializedTableHeader(0, safeLongToInt(numRows), 0, 0, 0, new byte[0]);
             header.writeTo(writer);
             writer.flush();
             return header.getSerializedSize();
@@ -84,23 +84,26 @@ public class KudoSerializer implements TableSerializer {
     }
 
     @Override
-    public List<HostColumnVector> mergeToHost(List<Object> buffers, Schema schema) {
+    public HostMergeResult mergeToHost(List<Object> buffers, Schema schema) {
         List<SerializedTable> serializedTables = buffers
                 .stream()
                 .map(o -> (SerializedTable) o)
                 .collect(Collectors.toList());
 
-        try (MultiTableDeserializer deserializer = new MultiTableDeserializer(serializedTables)) {
-            return Visitors.visitSchema(schema, deserializer);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        MergedInfoCalc mergedInfoCalc = MergedInfoCalc.calc(schema, serializedTables);
+//            System.err.println("MergedInfoCalc: " + mergedInfoCalc);
+        return HostBufferMerger.merge(schema, mergedInfoCalc);
+
     }
 
     @Override
-    public Table mergeTable(List<Object> buffers, Schema schema) {
-        List<HostColumnVector> children = mergeToHost(buffers, schema);
-        return HostColumnVector.toTable(children);
+    public ContiguousTable mergeTable(List<Object> buffers, Schema schema) {
+        try (HostMergeResult children = mergeToHost(buffers, schema)) {
+//            System.err.println("HostMergeResult: " + children);
+            return children.toContiguousTable(schema);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static long writeSliced(HostColumnVector[] columns, DataWriter out, long rowOffset, long numRows) throws Exception {
@@ -149,8 +152,8 @@ public class KudoSerializer implements TableSerializer {
 
 
     /////////////////////////////////////////////
-// METHODS
-/////////////////////////////////////////////
+    // METHODS
+    /////////////////////////////////////////////
 
 
     /////////////////////////////////////////////
@@ -166,6 +169,13 @@ public class KudoSerializer implements TableSerializer {
             out.write(PADDING, 0, (int) (paddedBytes - bytes));
         }
         return paddedBytes;
+    }
+
+    static int safeLongToInt(long value) {
+//        if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+//            throw new ArithmeticException("Overflow: long value is too large to fit in an int");
+//        }
+        return (int) value;
     }
 
 }

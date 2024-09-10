@@ -1,11 +1,6 @@
 package ai.rapids.cudf.serde.kudo;
 
-import ai.rapids.cudf.ColumnVector;
 import ai.rapids.cudf.HostMemoryBuffer;
-import ai.rapids.cudf.Schema;
-import ai.rapids.cudf.schema.Visitors;
-
-import java.util.List;
 
 public class SerializedTable implements AutoCloseable {
     private final SerializedTableHeader header;
@@ -22,14 +17,6 @@ public class SerializedTable implements AutoCloseable {
 
     public HostMemoryBuffer getBuffer() {
         return buffer;
-    }
-
-    List<ColumnVector> deserialize(Schema schema) {
-        try (ColumnVectorDeserializer deserializer = new ColumnVectorDeserializer(this)) {
-            return Visitors.visitSchema(schema, deserializer);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override
