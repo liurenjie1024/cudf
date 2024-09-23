@@ -169,20 +169,20 @@ public class KudoSerializerTest extends CudfTestBase {
 
         try (CloseableArray<Table> ignored = CloseableArray.wrap(tables)) {
             tables[0] = new Table.TestBuilder()
-//                    .column(-881L, 482L, 660L, 896L, -129L, -108L, -428L, 0L, 617L, 782L)
+                    .column(-881L, 482L, 660L, 896L, -129L, -108L, -428L, 0L, 617L, 782L)
                     .column(integers(665), integers(-267), integers(398), integers(-314),
                             integers(-370), integers(181), integers(665, 544), integers(222), integers(-587), integers(544))
                     .build();
 
             tables[1] = new Table.TestBuilder()
-//                    .column(-881L, 482L, 660L, 896L, 122L, 241L, 281L, 680L, 783L, null)
+                    .column(-881L, 482L, 660L, 896L, 122L, 241L, 281L, 680L, 783L, null)
                     .column(integers(-370), integers(398), integers(-587, 398), integers(-314),
                             integers(307), integers(-397, -633), integers(-314, 307), integers(-633), integers(-397), integers(181, -919, -175))
                     .build();
 
 
             tables[3] = new Table.TestBuilder()
-//                    .column(896L, -129L, -108L, -428L, 0L, 617L, 782L, 482L, 660L, 896L, 122L, 241L, 281L, 680L, 783L, null)
+                    .column(896L, -129L, -108L, -428L, 0L, 617L, 782L, 482L, 660L, 896L, 122L, 241L, 281L, 680L, 783L, null)
                     .column(integers(-314), integers(-370), integers(181), integers(665, 544), integers(222), integers(-587), integers(544),
                             integers(398), integers(-587, 398), integers(-314),
                             integers(307), integers(-397, -633), integers(-314, 307), integers(-633), integers(-397), integers(181, -919, -175))
