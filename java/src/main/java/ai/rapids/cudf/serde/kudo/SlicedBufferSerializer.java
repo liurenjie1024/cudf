@@ -75,12 +75,18 @@ class SlicedBufferSerializer implements SchemaWithColumnsVisitor<Long, Long> {
             throw new RuntimeException(e);
         }
 
-        long start = col.getOffsets()
-                .getInt(parent.offset * Integer.BYTES);
-        long end = col.getOffsets().getInt((parent.offset + parent.rowCount) * Integer.BYTES);
-        long rowCount = end - start;
+        SliceInfo current;
+        if (col.getOffsets() != null) {
+            long start = col.getOffsets()
+                    .getInt(parent.offset * Integer.BYTES);
+            long end = col.getOffsets().getInt((parent.offset + parent.rowCount) * Integer.BYTES);
+            long rowCount = end - start;
 
-        SliceInfo current = new SliceInfo(start, rowCount);
+            current = new SliceInfo(start, rowCount);
+        } else {
+            current = new SliceInfo(0, 0);
+        }
+
         sliceInfos.addLast(current);
         return bytesCopied;
     }
