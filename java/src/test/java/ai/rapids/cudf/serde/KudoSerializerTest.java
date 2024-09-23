@@ -3,6 +3,7 @@ package ai.rapids.cudf.serde;
 import ai.rapids.cudf.*;
 import ai.rapids.cudf.serde.kudo.KudoSerializer;
 import ai.rapids.cudf.serde.kudo.SerializedTable;
+import ai.rapids.cudf.utils.Arms;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
@@ -65,12 +66,12 @@ public class KudoSerializerTest extends CudfTestBase {
         }
         bout.flush();
         ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
-        List<Object> serializedBatched = IntStream.range(0, sliceCount)
+        List<Object> serializedBatches = IntStream.range(0, sliceCount)
                 .mapToObj(idx -> serializer.readOneTableBuffer(bin))
                 .collect(Collectors.toList());
 
         long numRows = 0;
-        for (Object obj : serializedBatched) {
+        for (Object obj : serializedBatches) {
             assertThat(obj).isInstanceOf(SerializedTable.class);
             SerializedTable serializedBatch = (SerializedTable) obj;
             numRows += serializedBatch.getHeader().getNumRows();
@@ -79,7 +80,7 @@ public class KudoSerializerTest extends CudfTestBase {
 
         assertThat(numRows).isEqualTo(table.getRowCount());
 
-        try (ContiguousTable ct = serializer.mergeTable(serializedBatched, schemaOf(table))) {
+        try (ContiguousTable ct = serializer.mergeTable(serializedBatches, schemaOf(table))) {
             Table found = ct.getTable();
             for (int i = 0; i < found.getNumberOfColumns(); i++) {
                 found.getColumn(i).getNullCount();
@@ -100,6 +101,11 @@ public class KudoSerializerTest extends CudfTestBase {
                 }
             }
             assertTablesAreEqual(table, found);
+        } finally {
+            List<SerializedTable> serializedTables = serializedBatches.stream()
+                    .map(o -> (SerializedTable) o)
+                    .collect(Collectors.toList());
+            Arms.closeQuietly(serializedTables);
         }
     }
 
@@ -194,6 +200,10 @@ public class KudoSerializerTest extends CudfTestBase {
         }
     }
 
+//    @Test
+//    void testMergeListMap() {
+//    }
+
     private static void checkMergeTable(Table expectedTable, List<SlicedTable> slicedTables) throws Exception {
         KudoSerializer serializer = new KudoSerializer();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -204,12 +214,12 @@ public class KudoSerializerTest extends CudfTestBase {
         bout.flush();
 
         ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
-        List<Object> serializedBatched = IntStream.range(0, slicedTables.size())
+        List<Object> serializedBatches = IntStream.range(0, slicedTables.size())
                 .mapToObj(idx -> serializer.readOneTableBuffer(bin))
                 .collect(Collectors.toList());
 
         long numRows = 0;
-        for (Object obj : serializedBatched) {
+        for (Object obj : serializedBatches) {
             assertThat(obj).isInstanceOf(SerializedTable.class);
             SerializedTable serializedBatch = (SerializedTable) obj;
             numRows += serializedBatch.getHeader().getNumRows();
@@ -218,7 +228,7 @@ public class KudoSerializerTest extends CudfTestBase {
 
         assertThat(numRows).isEqualTo(expectedTable.getRowCount());
 
-        try (ContiguousTable ct = serializer.mergeTable(serializedBatched, schemaOf(expectedTable))) {
+        try (ContiguousTable ct = serializer.mergeTable(serializedBatches, schemaOf(expectedTable))) {
             Table found = ct.getTable();
             for (int i = 0; i < found.getNumberOfColumns(); i++) {
                 found.getColumn(i).getNullCount();
@@ -239,6 +249,11 @@ public class KudoSerializerTest extends CudfTestBase {
                 }
             }
             assertTablesAreEqual(expectedTable, found);
+        } finally {
+            List<SerializedTable> serializedTables = serializedBatches.stream()
+                    .map(o -> (SerializedTable) o)
+                    .collect(Collectors.toList());
+            Arms.closeQuietly(serializedTables);
         }
     }
 

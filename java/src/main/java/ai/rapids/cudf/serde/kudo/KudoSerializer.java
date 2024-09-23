@@ -46,7 +46,7 @@ public class KudoSerializer implements TableSerializer {
         }
         try {
             DataWriter writer = writerFrom(out);
-            SerializedTableHeader header = new SerializedTableHeader(0, safeLongToInt(numRows) , 0, 0, 0, new byte[0]);
+            SerializedTableHeader header = new SerializedTableHeader(0, safeLongToInt(numRows), 0, 0, 0, new byte[0]);
             header.writeTo(writer);
             writer.flush();
             return header.getSerializedSize();
@@ -90,13 +90,9 @@ public class KudoSerializer implements TableSerializer {
                 .map(o -> (SerializedTable) o)
                 .collect(Collectors.toList());
 
-        try {
-            MergedInfoCalc mergedInfoCalc = MergedInfoCalc.calc(schema, serializedTables);
+        MergedInfoCalc mergedInfoCalc = MergedInfoCalc.calc(schema, serializedTables);
 //            System.err.println("MergedInfoCalc: " + mergedInfoCalc);
-            return HostBufferMerger.merge(schema, mergedInfoCalc);
-        } finally {
-            Arms.closeQuietly(serializedTables);
-        }
+        return HostBufferMerger.merge(schema, mergedInfoCalc);
 
     }
 
@@ -156,8 +152,8 @@ public class KudoSerializer implements TableSerializer {
 
 
     /////////////////////////////////////////////
-   // METHODS
-   /////////////////////////////////////////////
+    // METHODS
+    /////////////////////////////////////////////
 
 
     /////////////////////////////////////////////
