@@ -76,11 +76,17 @@ class SerializedTableHeaderCalc implements SchemaWithColumnsVisitor<Void, Serial
 
         hasValidityBuffer.add(col.getValidity() != null);
 
-        long start = col.getOffsets().getInt(parent.offset * Integer.BYTES);
-        long end = col.getOffsets().getInt((parent.offset + parent.rowCount) * Integer.BYTES);
-        long rowCount = end - start;
+        SliceInfo current;
 
-        SliceInfo current = new SliceInfo(start, rowCount);
+        if (col.getOffsets() != null) {
+            long start = col.getOffsets().getInt(parent.offset * Integer.BYTES);
+            long end = col.getOffsets().getInt((parent.offset + parent.rowCount) * Integer.BYTES);
+            long rowCount = end - start;
+            current = new SliceInfo(start, rowCount);
+        } else {
+            current = new SliceInfo(0, 0);
+        }
+
         sliceInfos.addLast(current);
         return null;
     }
