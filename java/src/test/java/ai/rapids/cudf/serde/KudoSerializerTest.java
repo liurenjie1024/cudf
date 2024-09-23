@@ -22,6 +22,8 @@ import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
 import static ai.rapids.cudf.TableTestUtils.*;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.*;
 
 import static ai.rapids.cudf.AssertUtils.assertTablesAreEqual;
@@ -162,7 +164,7 @@ public class KudoSerializerTest extends CudfTestBase {
                     .column(1.16, -1.0, -1.65, null, 0.0)
                     .build();
 
-            checkMergeTable(tables[3], Arrays.asList(
+            checkMergeTable(tables[3], asList(
                     SlicedTable.from(tables[0], 3, 2),
                     SlicedTable.from(tables[1], 7, 2),
                     SlicedTable.from(tables[2], 1, 1)));
@@ -194,15 +196,11 @@ public class KudoSerializerTest extends CudfTestBase {
                             integers(307), integers(-397, -633), integers(-314, 307), integers(-633), integers(-397), integers(181, -919, -175))
                     .build();
 
-            checkMergeTable(tables[3], Arrays.asList(
+            checkMergeTable(tables[3], asList(
                     SlicedTable.from(tables[0], 3, 7),
                     SlicedTable.from(tables[1], 1, 9)));
         }
     }
-
-//    @Test
-//    void testMergeListMap() {
-//    }
 
     private static void checkMergeTable(Table expectedTable, List<SlicedTable> slicedTables) throws Exception {
         KudoSerializer serializer = new KudoSerializer();
@@ -258,6 +256,10 @@ public class KudoSerializerTest extends CudfTestBase {
     }
 
     private static Table buildTestTable() {
+        HostColumnVector.ListType listMapType = new HostColumnVector.ListType(true,
+                new HostColumnVector.ListType(true, new HostColumnVector.StructType(true,
+                        new HostColumnVector.BasicType(false, DType.STRING),
+                        new HostColumnVector.BasicType(true, DType.STRING))));
         HostColumnVector.StructType mapStructType = new HostColumnVector.StructType(true,
                 new HostColumnVector.BasicType(false, DType.STRING),
                 new HostColumnVector.BasicType(false, DType.STRING));
@@ -337,6 +339,19 @@ public class KudoSerializerTest extends CudfTestBase {
                         strings(null, null, null), strings(null, null), strings((String) null),
                         strings((String) null), strings(null, null), strings(null, null, null, null, null))
                 .column(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, (String[]) null)
+                .column(listMapType,
+                        asList(asList(struct("k1", "v1"), struct("k2", "v2")), singletonList(struct("k3", "v3"))),
+                        asList(asList(struct("k4", "v4"), struct("k5", "v5"), struct("k6", "v6")), singletonList(struct("k7", "v7"))),
+                        null, null, null,
+                        asList(asList(struct("k8", "v8"), struct("k9", "v9")), asList(struct("k10", "v10"), struct("k11", "v11"), struct("k12", "v12"), struct("k13", "v13"))),
+                        singletonList(asList(struct("k14", "v14"), struct("k15", "v15"))),
+                        null, null, null, null,
+                        asList(asList(struct("k16", "v16"), struct("k17", "v17")), singletonList(struct("k18", "v18"))),
+                        asList(asList(struct("k19", "v19"), struct("k20", "v20")), singletonList(struct("k21", "v21"))),
+                        asList(singletonList(struct("k22", "v22")), singletonList(struct("k23", "v23"))),
+                        asList(null, null, null),
+                        asList(singletonList(struct("k22", null)), singletonList(struct("k23", null))),
+                        null, null, null, null, null)
                 .build();
     }
 

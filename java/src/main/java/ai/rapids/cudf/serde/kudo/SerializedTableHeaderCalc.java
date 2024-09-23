@@ -61,11 +61,14 @@ class SerializedTableHeaderCalc implements SchemaWithColumnsVisitor<Void, Serial
 
 
         long validityBufferLength = 0;
-        if (col.hasValidityVector()) {
+        if (col.hasValidityVector() && parent.rowCount > 0) {
             validityBufferLength = padFor64byteAlignment(parent.getValidityBufferInfo().getBufferLength());
         }
 
-        long offsetBufferLength = padFor64byteAlignment((parent.rowCount + 1) * Integer.BYTES);
+        long offsetBufferLength = 0;
+        if (col.getOffsets() != null && parent.rowCount > 0) {
+            offsetBufferLength = padFor64byteAlignment((parent.rowCount + 1) * Integer.BYTES);
+        }
 
         this.validityBufferLen += validityBufferLength;
         this.offsetBufferLen += offsetBufferLength;
@@ -112,7 +115,7 @@ class SerializedTableHeaderCalc implements SchemaWithColumnsVisitor<Void, Serial
                                       SliceInfo info) {
         switch (bufferType) {
             case VALIDITY:
-                if (col.hasValidityVector()) {
+                if (col.hasValidityVector() && info.getRowCount() > 0) {
                     return  padFor64byteAlignment(info.getValidityBufferInfo().getBufferLength());
                 } else {
                     return 0;
