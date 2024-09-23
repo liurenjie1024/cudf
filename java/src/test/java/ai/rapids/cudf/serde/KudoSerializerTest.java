@@ -15,7 +15,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -23,6 +25,7 @@ import java.util.stream.LongStream;
 
 import static ai.rapids.cudf.TableTestUtils.*;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.*;
 
@@ -39,8 +42,6 @@ public class KudoSerializerTest extends CudfTestBase {
     @BeforeAll
     public static void setupAll() {
         table = buildTestTable();
-//        table = buildRandomTestTable();
-//        table = buildTestCaseTable();
     }
 
     @AfterAll
@@ -202,6 +203,31 @@ public class KudoSerializerTest extends CudfTestBase {
         }
     }
 
+    @Test
+    void testSerializeValidity() throws Exception {
+        Table[] tables = new Table[2];
+
+        try (CloseableArray<Table> ignored = CloseableArray.wrap(tables)) {
+            Integer[] values = new Integer[512];
+            for (int i = 0; i < values.length; i++) {
+                values[i] = i;
+            }
+            values[1] = null;
+            values[2] = null;
+            tables[0] = new Table.TestBuilder()
+                    .column(values)
+                    .build();
+
+            tables[1] = new Table.TestBuilder()
+                    .column(509, 510, 511)
+                    .build();
+
+
+            checkMergeTable(tables[1], singletonList(
+                    SlicedTable.from(tables[0], 509, 3)));
+        }
+    }
+
     private static void checkMergeTable(Table expectedTable, List<SlicedTable> slicedTables) throws Exception {
         KudoSerializer serializer = new KudoSerializer();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -266,6 +292,10 @@ public class KudoSerializerTest extends CudfTestBase {
         HostColumnVector.StructType structType = new HostColumnVector.StructType(true,
                 new HostColumnVector.BasicType(true, DType.INT32),
                 new HostColumnVector.BasicType(false, DType.FLOAT32));
+        HostColumnVector.ListType listDateType = new HostColumnVector.ListType(true,
+                new HostColumnVector.StructType(false,
+                        new HostColumnVector.BasicType(false, DType.INT32),
+                        new HostColumnVector.BasicType(true, DType.INT32)));
         return new Table.TestBuilder()
                 .column(100, 202, 3003, 40004, 5, -60, 1, null, 3, null, 5, null, 7, null, 9, null, 11, null, 13, null, 15)
                 .column(true, true, false, false, true, null, true, true, null, false, false, null, true, true, null, false, false, null, true, true, null)
@@ -352,51 +382,29 @@ public class KudoSerializerTest extends CudfTestBase {
                         asList(null, null, null),
                         asList(singletonList(struct("k22", null)), singletonList(struct("k23", null))),
                         null, null, null, null, null)
+                .column(listDateType,
+                        asList(struct(-210, 293), struct(-719, 205), struct(-509, 183), struct(174, 122), struct(647, 683)),
+                        asList(struct(311, 992), struct(-169, 482), struct(166, 525)),
+                        asList(struct(156, 197), struct(926, 134), struct(747, 312), struct(293, 801)),
+                        asList(struct(647, null), struct(293, 387)),
+                        emptyList(),
+                        null,
+                        emptyList(),
+                        null,
+                        asList(struct(-210, 293), struct(-719, 205), struct(-509, 183), struct(174, 122), struct(647, 683)),
+                        asList(struct(311, 992), struct(-169, 482), struct(166, 525)),
+                        asList(struct(156, 197), struct(926, 134), struct(747, 312), struct(293, 801)),
+                        asList(struct(647, null), struct(293, 387)),
+                        emptyList(),
+                        null,
+                        emptyList(),
+                        null,
+                        singletonList(struct(778, 765)),
+                        asList(struct(7, 87), struct(8, 96)),
+                        asList(struct(9, 56), struct(10, 532), struct(11, 456)),
+                        null,
+                        emptyList())
                 .build();
     }
 
-    private static Table buildRandomTestTable() {
-        Random random = new Random(RANDOM_SEED);
-        int numRows = 1000;
-        Table.TestBuilder builder =  new Table.TestBuilder();
-
-        List<Integer> col1_int = new ArrayList<>(numRows);
-        List<Long> col2_long = new ArrayList<>(numRows);
-        List<Double> col3_double = new ArrayList<>(numRows);
-
-        for (int i=0; i<numRows; i++) {
-            boolean isNull = random.nextBoolean();
-            if (isNull) {
-                col1_int.add(null);
-            } else {
-                col1_int.add(random.nextInt());
-            }
-
-            isNull = random.nextBoolean();
-            if (isNull) {
-                col2_long.add(null);
-            } else {
-                col2_long.add(random.nextLong());
-            }
-
-            isNull = random.nextBoolean();
-            if (isNull) {
-                col3_double.add(null);
-            } else {
-                col3_double.add(random.nextDouble());
-            }
-        }
-
-        return builder.column(col1_int.toArray(new Integer[0]))
-                .column(col2_long.toArray(new Long[0]))
-                .column(col3_double.toArray(new Double[0]))
-                .build();
-    }
-
-    private static Table buildTestCaseTable() {
-        return new Table.TestBuilder()
-                .column(7384599865458553744L, 7297472754928930747L, 8037504783866039264L, 6611550030556313925L, 8733367499390113902L)
-                .column(1.162179139E9, -1.0, -1.65308661E9, null, 0.)
-                .build();
-    }
 }

@@ -32,7 +32,7 @@ import static java.lang.Double.POSITIVE_INFINITY;
 /**
  * Utility class for generating test data
  */
-class TestUtils {
+public class TestUtils {
 
   static int NULL = 0x00000001;
   static int ZERO = 0x00000002;

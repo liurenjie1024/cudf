@@ -117,7 +117,7 @@ class SlicedBufferSerializer implements SchemaWithColumnsVisitor<Long, Long> {
     }
 
     private long copySlicedValidity(HostColumnVectorCore column, SliceInfo sliceInfo) throws IOException {
-        if (column.getValidity() != null) {
+        if (column.getValidity() != null && sliceInfo.getRowCount() > 0) {
             HostMemoryBuffer buff = column.getValidity();
             long len = sliceInfo.getValidityBufferInfo().getBufferLength();
             writer.copyDataFrom(buff, sliceInfo.getValidityBufferInfo().getBufferOffset(),
